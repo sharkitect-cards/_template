@@ -363,6 +363,16 @@
 
     <script>
         function saveContact() {
+            const _officePhone = `{{OFFICE_PHONE_DISPLAY}}`;
+            const _officeAddr = `{{OFFICE_ADDRESS_DISPLAY}}`;
+            const _tagline = `{{TAGLINE}}`;
+            const _bio = `{{BIO}}`;
+            const _ap = _officeAddr ? _officeAddr.split(',').map(s => s.trim()) : [];
+            const _adrLine = _officeAddr
+                ? `ADR;TYPE=WORK:;;${_ap[0] || ''};${_ap[1] || ''};${_ap[2] || ''};${_ap[3] || ''};USA`
+                : '';
+            const _noteStr = [_tagline, _bio].filter(Boolean).join(' | ');
+
             const vcard = [
                 'BEGIN:VCARD',
                 'VERSION:3.0',
@@ -371,9 +381,11 @@
                 'ORG:{{COMPANY_NAME}}',
                 'TITLE:{{TITLE}}',
                 'TEL;TYPE=CELL:{{PHONE_DISPLAY}}',
+                _officePhone ? `TEL;TYPE=WORK:${_officePhone}` : '',
                 'EMAIL;TYPE=WORK:{{EMAIL}}',
                 'URL:{{WEBSITE_URL}}',
-                'NOTE:{{VCARD_NOTE}}',
+                _adrLine,
+                _noteStr ? `NOTE:${_noteStr}` : '',
                 '{{PHOTO_LINE}}',
                 'END:VCARD'
             ].filter(Boolean).join('\r\n');
