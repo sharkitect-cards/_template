@@ -363,9 +363,6 @@
 
     <script>
         function saveContact() {
-            const _url = '{{WEBSITE_URL}}';
-            const _note = '{{VCARD_NOTE}}';
-            const _photo = '{{PHOTO_LINE}}';
             const vcard = [
                 'BEGIN:VCARD',
                 'VERSION:3.0',
@@ -375,11 +372,11 @@
                 'TITLE:{{TITLE}}',
                 'TEL;TYPE=CELL:{{PHONE_DISPLAY}}',
                 'EMAIL;TYPE=WORK:{{EMAIL}}',
-                _url ? ('URL:' + _url) : null,
-                _note ? ('NOTE:' + _note) : null,
-                _photo || null,
+                'URL:{{WEBSITE_URL}}',
+                'NOTE:{{VCARD_NOTE}}',
+                '{{PHOTO_LINE}}',
                 'END:VCARD'
-            ].filter(Boolean).join('\r\n');
+            ].join('\r\n');
 
             const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
             const url = URL.createObjectURL(blob);
