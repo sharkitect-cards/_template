@@ -1,40 +1,79 @@
-# Sharkitect Card Template
+# Generic Card Template (`_template`)
 
-Master template for custom digital business cards. This repo is marked as a **GitHub Template Repository** — create new client cards from it via `gh repo create --template sharkitect-cards/_template`.
+Canonical fallback template for any company that does NOT yet have a per-company template repo (`_template-{slug}`).
 
-## What's in here
+## When this template is used
 
-- `index.html` — the master card HTML with `{{VARIABLES}}` placeholders
-- Every variable is documented in the build guide at `resources/digital-card/template/BUILD-GUIDE.md` in the Workforce HQ workspace
+The card-intake n8n workflow (`sdytO7y1ZjrPIanA`) routes to this generic template when the contact's associated HubSpot company has `card_template_slug` empty/null. A "company template prep" task is logged to Supabase so the per-company template can be built later.
 
-## How to spawn a new card
+## Token contract
 
-Use the automation tool in the Skill Management Hub workspace (once built): `tools/new-card.py --slug acme --name "Acme Inc" --email contact@acme.com ...`
+This template uses TWO sets of tokens.
 
-The tool will:
-1. Spawn a new repo from this template: `sharkitect-cards/{slug}`
-2. Fill in all `{{VARIABLES}}` with the client's values
-3. Generate a QR code SVG pointing to the card's live URL
-4. Build the vCard (.vcf) file with embedded contact photo
-5. Enable GitHub Pages
-6. Return the live URL: `https://cards.sharkitectdigital.com/{slug}/`
+### Person tokens (8) — supplied per spawn
 
-## Manual spawn (if the tool isn't available)
+| Token | Source |
+|---|---|
+| `{{PERSON_FULL_NAME}}` | "Jane Smith" |
+| `{{PERSON_FULL_NAME_DASH}}` | "Jane-Smith" (vCard download filename) |
+| `{{PERSON_FIRST_NAME}}` | "Jane" |
+| `{{PERSON_LAST_NAME}}` | "Smith" |
+| `{{PERSON_TITLE}}` | Job title |
+| `{{PERSON_PHONE_DISPLAY}}` | "(913) 555-1234" |
+| `{{PERSON_PHONE_E164}}` | "+19135551234" |
+| `{{PERSON_EMAIL}}` | "jane@example.com" |
+| `{{PERSON_PHOTO_B64}}` | Optional JPEG base64 (no data: prefix) |
 
-```bash
-gh repo create sharkitect-cards/{slug} --template sharkitect-cards/_template --public
-git clone https://github.com/sharkitect-cards/{slug}.git
-cd {slug}
-# Edit index.html, replace all {{VARIABLES}}
-# Add logo.png, qr-code.svg, {slug}.vcf
-git add -A && git commit -m "Build {slug} card" && git push
-gh api repos/sharkitect-cards/{slug}/pages -X POST --input - <<'EOF'
-{"source":{"branch":"main","path":"/"},"build_type":"legacy"}
-EOF
-```
+### Company tokens (10) — pulled from HubSpot company + Supabase company_profiles
 
-Live URL will be `https://cards.sharkitectdigital.com/{slug}/` within a few minutes.
+| Token | Source |
+|---|---|
+| `{{COMPANY_NAME}}` | HubSpot `company.name` |
+| `{{COMPANY_TAGLINE}}` | HubSpot `company.tagline` |
+| `{{COMPANY_DESCRIPTOR}}` | HubSpot `company.sharkitect_descriptor` |
+| `{{COMPANY_ACCENT_COLOR}}` | HubSpot `company.sharkitect_accent_color` (hex, e.g. `#C01010`) |
+| `{{COMPANY_ACCENT_RGB}}` | Same color as RGB triplet (e.g. `192, 16, 16`) — used in rgba() |
+| `{{COMPANY_OFFICE_PHONE_DISPLAY}}` | HubSpot `company.phone` formatted "(913) 555-1234" |
+| `{{COMPANY_OFFICE_PHONE_E164}}` | Same phone as "+19135551234" |
+| `{{COMPANY_OFFICE_ADDR}}` | HubSpot `company.address` (single line) |
+| `{{COMPANY_OFFICE_ADDR_URLENC}}` | URL-encoded for Google Maps query |
+| `{{COMPANY_WEBSITE_URL}}` | HubSpot `company.website` ("https://...") |
+| `{{COMPANY_WEBSITE_DISPLAY}}` | Same without scheme ("www.example.com") |
 
-## Do not serve this repo directly
+### Conditional blocks
 
-The template is not meant to be viewed as a card — it still has `{{VARIABLES}}` placeholders. Pages is NOT enabled on this repo for that reason. Spawn a new repo from it, fill the variables, enable Pages on the spawned repo.
+Strip the `<!-- X_START -->` / `<!-- X_END -->` block (inclusive) when the corresponding field is empty:
+
+- `OFFICE_PHONE` — strip if `company.phone` is empty
+- `WEBSITE` — strip if `company.website` is empty
+- `OFFICE_ADDRESS` — strip if `company.address` is empty
+
+## Files in this template
+
+| File | Purpose |
+|---|---|
+| `index.html` | Card markup, fully tokenized |
+| `manifest.json` | PWA manifest, person+company tokens |
+| `logo.svg` | **Placeholder** — n8n fetches `company.logo_url` and overwrites with a square-cropped 512x512 version |
+| `README.md` | This file |
+
+## Logo handling for new companies
+
+Because `card_template_slug` is empty, this is the first card the company is getting. n8n attempts to:
+
+1. Fetch `company.logo_url` from HubSpot (or Supabase `company_profiles.logo_url`)
+2. Square-crop / pad to 512x512 (the `.logo` container is 120x120 with `object-fit: contain`)
+3. Overwrite `logo.svg` (or push as `logo.png` and update the `<img src>`)
+
+If no logo is available, the placeholder square ships and a Supabase task is logged: "Manual logo prep needed for {company}".
+
+## Promoting a generic spawn into a company template
+
+When a company has 1+ live cards using this generic template, manually:
+
+1. Pick the best example card repo as the reference
+2. Square-optimize the logo (1:1 aspect, transparent or matched bg)
+3. Lock in tagline / descriptor / accent color in HubSpot
+4. Create `_template-{company-slug}` and verify byte-exact spawn via `tools/card-spawn.py --dry-run`
+5. Set the company's `card_template_slug` in HubSpot + Supabase
+6. Future cards for that company use the locked template; existing cards stay as-is unless explicitly upgraded
