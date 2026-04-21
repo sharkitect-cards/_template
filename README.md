@@ -36,7 +36,7 @@ This template uses TWO sets of tokens.
 | `{{COMPANY_OFFICE_PHONE_DISPLAY}}` | HubSpot `company.phone` formatted "(913) 555-1234" |
 | `{{COMPANY_OFFICE_PHONE_E164}}` | Same phone as "+19135551234" |
 | `{{COMPANY_OFFICE_ADDR}}` | HubSpot `company.address` (single line) |
-| `{{COMPANY_OFFICE_ADDR_URLENC}}` | URL-encoded for Google Maps query |
+| `{{COMPANY_OFFICE_ADDR_MAPS_URL}}` | Full `https://www.google.com/maps/search/?api=1&query=…` URL |
 | `{{COMPANY_WEBSITE_URL}}` | HubSpot `company.website` ("https://...") |
 | `{{COMPANY_WEBSITE_DISPLAY}}` | Same without scheme ("www.example.com") |
 
