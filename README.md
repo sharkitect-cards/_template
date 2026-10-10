@@ -77,3 +77,12 @@ When a company has 1+ live cards using this generic template, manually:
 4. Create `_template-{company-slug}` and verify byte-exact spawn via `tools/card-spawn.py --dry-run`
 5. Set the company's `card_template_slug` in HubSpot + Supabase
 6. Future cards for that company use the locked template; existing cards stay as-is unless explicitly upgraded
+
+## Share icon + link preview (added 2026-10-10)
+
+The round icon in the card's top-right corner opens the phone's share sheet with the card link. On desktop it copies the link and shows "Link copied". It is a header control, not a second button: the card still has exactly one button (Save My Contact, opens the QR). Do not turn it into a full-width button.
+
+Link-preview (Open Graph) tags in `<head>` make a texted link show the person's name, title and an image. They use `{{PERSON_CARD_URL}}`, which `tools/card-spawn.py` fills with the card's URL (ending in `/`). Hand-built cards must replace it by hand.
+**Before shipping a card from this template, add `og-image.jpg` (1200x630 JPG/PNG, never SVG) to the card repo.** Messages, WhatsApp and Facebook do not render SVG, and this generic template has no raster to use. Without the file the shared link still works, it just shows no image.
+
+Regenerate or retrofit any card with HQ `tools/card-builds/add_share_button.py` (idempotent).
